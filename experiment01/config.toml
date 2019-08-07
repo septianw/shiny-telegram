@@ -1,0 +1,9 @@
+[server]
+bind = "192.168.122.1"
+port = 4519
+
+[database]
+host = "localhost"
+port = 3306
+user = "asep"
+pass = "dummypass"
