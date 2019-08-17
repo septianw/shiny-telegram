@@ -1,9 +1,21 @@
 [server]
 bind = "192.168.122.1"
 port = 4519
+moduleLocation = "./modules"
 
 [database]
-host = "localhost"
+type = "mysql"
+hostname = "localhost"
 port = 3306
-user = "asep"
-pass = "dummypass"
+username = "asep"
+password = "dummypass"
+database = "ipoint"
+
+[schema.users]
+uid = "number"
+name = "string"
+password = "string"
+
+[schema.sessions]
+sid = "number"
+data = "text"

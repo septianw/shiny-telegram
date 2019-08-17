@@ -3,9 +3,9 @@ package main
 /**
 This app will contain multilevel bootstrap event
 */
-
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -22,6 +22,9 @@ func main() {
 		Addr:    ListenAddr,
 		Handler: r,
 	}
+	fmt.Printf("Listening at: %s", ListenAddr)
+
+	srv.ListenAndServe()
 
 	// gracefull shutdown procedure
 
@@ -40,9 +43,10 @@ func main() {
 	// kill -9 is syscall.SIGKILL but can't be catch, so don't need add it
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
+	log.Println("wow")
 	log.Println("Shutdown Server ...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatal("Server Shutdown:", err)
