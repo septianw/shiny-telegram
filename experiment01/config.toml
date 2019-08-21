@@ -1,7 +1,10 @@
 [server]
 bind = "192.168.122.1"
 port = 4519
-moduleLocation = "./modules"
+# if this empty, will use default location ./modules
+moduleLocation = ""
+# if this empty, will use default location ./lib
+libraryLocation = ""
 
 [database]
 type = "mysql"

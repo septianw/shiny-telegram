@@ -1,3 +1,5 @@
+*.so
+*.debug
 ./experiment01/experiment01
 ./experiment02/experiment02
 ./experiment01/mainpage/node_modules

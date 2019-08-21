@@ -12,15 +12,21 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
+
+var Modloc string = ""
+var Libloc string = ""
+var Routers *gin.Engine
 
 func main() {
 	BootstrapAll()
 
-	r := SetupRouter()
+	// r := SetupRouter()
 	srv := &http.Server{
 		Addr:    ListenAddr,
-		Handler: r,
+		Handler: Routers,
 	}
 	fmt.Printf("Listening at: %s", ListenAddr)
 

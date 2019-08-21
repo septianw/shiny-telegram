@@ -1,0 +1,5 @@
+# Just put it here as a placeholder.
+# [module.websocket]
+# path = /usr/local/lib/%s/modules/websocket/ # default kosongkan untuk ambil default.
+# module = "websocket.so"
+

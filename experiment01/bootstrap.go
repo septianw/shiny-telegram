@@ -8,6 +8,9 @@ import (
 
 	"github.com/briandowns/spinner"
 
+	"io/ioutil"
+	"strings"
+
 	"github.com/spf13/viper"
 )
 
@@ -16,19 +19,6 @@ const BOOTSTRAP_LEVEL_1 = 1
 const BOOTSTRAP_LEVEL_2 = 2
 const BOOTSTRAP_LEVEL_3 = 3
 
-type Dbconf struct {
-	Type     string
-	Host     string
-	Port     uint16
-	User     string
-	Pass     string
-	Database string
-}
-
-type Status struct {
-	Installed uint8
-}
-
 var Spin = spinner.New(spinner.CharSets[24], 100*time.Millisecond)
 var ListenAddr, Dsn string
 
@@ -36,13 +26,17 @@ var ListenAddr, Dsn string
 
 // NOTE: Dari setiap module ada semacam hook yang dapat dipanggil pada bootstrap level berapa.
 
+// check integrity (rely on system, we can't check ourself id)
+// check requirement
+//   paths
+//   config
+//   libraries
 func RunBootLevel0() {
 	var files []string
 
 	// fmt.Println()
 	Spin.Start()
 	Spin.Suffix = "  Check files existence:"
-	// time.Sleep(4 * time.Second)
 	files = []string{
 		fmt.Sprintf("/etc/%s/config", APPNAME),
 		fmt.Sprintf("/etc/%s/config.d/", APPNAME),
@@ -97,17 +91,34 @@ func RunBootLevel0() {
 	default:
 		STAGE = "development"
 	}
-	// check integrity (rely on system, we can't check ourself id)
-	// check requirement
-	//   paths
-	//   config
-	//   libraries
+
+	// Load main library
+	Libloc = viper.GetString("libraryLocation")
+
+	// if modloc is empty use default location Current Working Directory
+	if strings.Compare(Libloc, "") == 0 {
+		if strings.Compare(LIBRARY_LOCATION, "") != 0 {
+			Libloc = LIBRARY_LOCATION
+		} else {
+			cwd, err := os.Getwd()
+			ErrHandler(err)
+			Libloc = cwd + "/lib"
+		}
+	}
+
 	// time.Sleep(10 * time.Second)
 	Spin.Stop()
 }
 
+// basic connectivity
+//   db
+//   cache
+// basic table structure
+//   check schema structure
+//   schema exist
 func RunBootLevel1() {
 	var dbconf Dbconf
+	var db Db
 
 	RunBootLevel0()
 	Spin.Start()
@@ -126,27 +137,40 @@ func RunBootLevel1() {
 	dbconf.Pass = d["password"].(string)
 	dbconf.Database = d["database"].(string)
 
-	succeed, errPing := PingDb(dbconf)
-	if !succeed {
-		log.Fatalln(errPing)
-		os.Exit(3)
-	}
+	db = LoadDatabase(Libloc + "/database.so")
+	fmt.Printf("%+v", db)
 
-	if !SetupDb(dbconf) {
-		// fmt.Println("Database migration success.")
-		fmt.Println("Database migration failed.")
-		os.Exit(3)
-	}
-	// else {
-	// fmt.Println("Database connection succeed")
-	// }
+	// TryCatchBlock{
+	// 	Try: func() {
+	// 		Spin.Prefix = " Testing database config"
+	// 		succeed, errPing := db.PingDb(dbconf)
+	// 		if !succeed {
+	// 			log.Fatalln(errPing)
+	// 			os.Exit(3)
+	// 		}
+	// 	},
+	// 	Catch: func(e Exception) {
+	// 		log.Fatalf("Error raised while running PingDb: %+v", e)
+	// 		os.Exit(3)
+	// 	},
+	// }.Do()
 
-	// basic connectivity
-	//   db
-	//   cache
-	// basic table structure
-	//   check schema structure
-	//   schema exist
+	// TryCatchBlock{
+	// 	Try: func() {
+	// 		Spin.Prefix = " Migrating database"
+	// 		if !db.SetupDb(dbconf) {
+	// 			// fmt.Println("Database migration success.")
+	// 			fmt.Println("Database migration failed.")
+	// 			os.Exit(3)
+	// 		}
+
+	// 	},
+	// 	Catch: func(e Exception) {
+	// 		log.Fatalf("Error raised while running SetupDb: %+v", e)
+	// 		os.Exit(3)
+	// 	},
+	// }.Do()
+
 	// time.Sleep(10 * time.Second)
 	Spin.Stop()
 }
@@ -155,31 +179,74 @@ func RunBootLevel1() {
 // TODO: load config config itu dan gunakan viper merge config untuk merge.
 // TODO: format config pakai map, lalu loop config tiap module pakai range map.
 
+// init core
+//   setup
+//   run
+// collecting module
+// setup basic module
 func RunBootLevel2() {
+	// var modules []*Module
+
 	RunBootLevel1()
 	Spin.Start()
 	Spin.Suffix = "  This is booting level 2"
 
-	modloc := viper.GetString("moduleLocation")
-	fmt.Printf("%+v", modloc)
+	// Load Core module
+	Modloc = viper.GetString("moduleLocation")
 
-	// init core
-	//   setup
-	//   run
-	// collecting module
-	// setup basic module
+	// if modloc is empty use default location Current Working Directory
+	if strings.Compare(Modloc, "") == 0 {
+		if strings.Compare(LIBRARY_LOCATION, "") != 0 {
+			Modloc = LIBRARY_LOCATION
+		} else {
+			cwd, err := os.Getwd()
+			ErrHandler(err)
+			Modloc = cwd + "/modules"
+		}
+	}
+
+	coreModules, err := ioutil.ReadDir(strings.Join(
+		[]string{Modloc, "core"}, "/"))
+	ErrHandler(err)
+
+	// Setup router for the first time.
+	Routers = SetupRouter()
+
+	for _, coreModule := range coreModules {
+		m := LoadCoreModule(coreModule.Name())
+		m.Bootstrap()
+		m.Router(Routers)
+	}
+	// Load Core module done
+
+	// fmt.Printf("%+v", modloc)
+
 	// time.Sleep(10 * time.Second)
 	Spin.Stop()
 }
 
+// init contrib
+//   setup
+//   run
+// setup router
 func RunBootLevel3() {
 	RunBootLevel2()
 	Spin.Start()
 	Spin.Suffix = "  This is booting level 3"
-	// init contrib
-	//   setup
-	//   run
-	// setup router
+
+	Modloc = viper.GetString("moduleLocation")
+
+	// if modloc is empty use default location or Current Working Directory
+	if strings.Compare(Modloc, "") == 0 {
+		if strings.Compare(MODULE_LOCATION, "") != 0 {
+			Modloc = MODULE_LOCATION
+		} else {
+			cwd, err := os.Getwd()
+			ErrHandler(err)
+			Modloc = cwd + "/modules"
+		}
+	}
+
 	// time.Sleep(10 * time.Second)
 	Spin.Stop()
 }

@@ -24,9 +24,9 @@ func SetupRouter() *gin.Engine {
 		gin.SetMode("debug")
 	}
 
-	r.GET("/ping", func(c *gin.Context) {
-		c.String(http.StatusOK, "pong")
-	})
+	// r.GET("/ping", func(c *gin.Context) {
+	// 	c.String(http.StatusOK, "pong")
+	// })
 
 	r.GET("/", func(c *gin.Context) {
 		c.String(http.StatusOK, "Hello World")
