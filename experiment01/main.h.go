@@ -15,13 +15,6 @@ type Status struct {
 
 type Exception interface{}
 
-type Db struct {
-	PingDb  PingDbFunc
-	SetupDb SetupDbFunc
-	Migrate MigrateFunc
-	OpenDb  OpenDbFunc
-}
-
 type TryCatchBlock struct {
 	Try     func()
 	Catch   func(Exception)

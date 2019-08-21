@@ -73,23 +73,3 @@ func LoadContribModule(moduleName string) *Module {
 
 	return &mod
 }
-
-func LoadDatabase(SoPath string) Db {
-	var db Db
-	log.Println(SoPath)
-	So := LoadSo(SoPath)
-	PingDb, err := So.Lookup("PingDb")
-	ErrHandler(err)
-	SetupDb, err := So.Lookup("SetupDb")
-	Migrate, err := So.Lookup("MigrateFunc")
-	OpenDb, err := So.Lookup("OpenDbFunc")
-
-	db = Db{
-		PingDb:  PingDb.(PingDbFunc),
-		SetupDb: SetupDb.(SetupDbFunc),
-		Migrate: Migrate.(MigrateFunc),
-		OpenDb:  OpenDb.(OpenDbFunc),
-	}
-	// database := SoSym.(DatabaseInterface)
-	return db
-}

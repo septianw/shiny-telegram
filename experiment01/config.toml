@@ -7,18 +7,8 @@ moduleLocation = ""
 libraryLocation = ""
 
 [database]
-type = "mysql"
-hostname = "localhost"
-port = 3306
-username = "asep"
-password = "dummypass"
-database = "ipoint"
-
-[schema.users]
-uid = "number"
-name = "string"
-password = "string"
-
-[schema.sessions]
-sid = "number"
-data = "text"
+hostname = "10.1.80.36"
+port = 1521
+username = "cpis"
+password = "meong"
+database = "x4500"

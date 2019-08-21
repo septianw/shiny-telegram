@@ -9,6 +9,7 @@ import (
 	"github.com/briandowns/spinner"
 
 	"io/ioutil"
+	// "reflect"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -76,7 +77,7 @@ func RunBootLevel0() {
 
 	// fmt.Printf("\n%+v\n", viper.Get("schema"))
 
-	// fmt.Printf("Loaded configuration file: %s\n", viper.ConfigFileUsed())
+	fmt.Printf("Loaded configuration file: %s\n", viper.ConfigFileUsed())
 
 	ListenAddr = fmt.Sprintf("%s:%d", viper.GetString("server.bind"), viper.GetInt("server.port"))
 	// fmt.Printf("Listening at %s\n", ListenAddr)
@@ -93,18 +94,18 @@ func RunBootLevel0() {
 	}
 
 	// Load main library
-	Libloc = viper.GetString("libraryLocation")
+	// Libloc = viper.GetString("libraryLocation")
 
-	// if modloc is empty use default location Current Working Directory
-	if strings.Compare(Libloc, "") == 0 {
-		if strings.Compare(LIBRARY_LOCATION, "") != 0 {
-			Libloc = LIBRARY_LOCATION
-		} else {
-			cwd, err := os.Getwd()
-			ErrHandler(err)
-			Libloc = cwd + "/lib"
-		}
-	}
+	// // if modloc is empty use default location Current Working Directory
+	// if strings.Compare(Libloc, "") == 0 {
+	// 	if strings.Compare(LIBRARY_LOCATION, "") != 0 {
+	// 		Libloc = LIBRARY_LOCATION
+	// 	} else {
+	// 		cwd, err := os.Getwd()
+	// 		ErrHandler(err)
+	// 		Libloc = cwd + "/lib"
+	// 	}
+	// }
 
 	// time.Sleep(10 * time.Second)
 	Spin.Stop()
@@ -118,60 +119,60 @@ func RunBootLevel0() {
 //   schema exist
 func RunBootLevel1() {
 	var dbconf Dbconf
-	var db Db
 
 	RunBootLevel0()
 	Spin.Start()
 	Spin.Suffix = "  This is booting level 1"
-	// fmt.Printf("server: %+v", GetConfig("server"))
+	fmt.Printf("server: %+v", GetConfig("server"))
 
 	// basic connectivity
-	d := GetConfig("database").(map[string]interface{})
+	// TODO: Semua yang ada comment, itu yang sebelumnya berjalan dengan baik.
+	//       Sampai negara api menyerang.
+	// d := GetConfig("database").(map[string]interface{})
+	// fmt.Printf("|%+v|", reflect.TypeOf(d["hostname"]))
+	// d := viper.Get("database").(map[string]interface{})
 
-	dbconf.Host = d["hostname"].(string)
-	dbconf.Type = d["type"].(string)
+	dbconf.Host = viper.GetString("database.hostname") // d["hostname"].(string)
+	dbconf.Type = viper.GetString("database.type")     // d["type"].(string)
 	// convert dari map viper ke int64 dan convert lagi ke uint16
 	// karena int64 terlalu besar untuk menyimpan port yang isinya maksimum hanya 65535
-	dbconf.Port = uint16(d["port"].(int64))
-	dbconf.User = d["username"].(string)
-	dbconf.Pass = d["password"].(string)
-	dbconf.Database = d["database"].(string)
+	dbconf.Port = uint16(viper.GetInt64("database.port"))  // uint16(d["port"].(int64))
+	dbconf.User = viper.GetString("database.username")     // d["username"].(string)
+	dbconf.Pass = viper.GetString("database.password")     // d["password"].(string)
+	dbconf.Database = viper.GetString("database.database") // d["database"].(string)
 
-	db = LoadDatabase(Libloc + "/database.so")
-	fmt.Printf("%+v", db)
+	TryCatchBlock{
+		Try: func() {
+			Spin.Prefix = " Testing database config"
+			succeed, errPing := PingDb(dbconf)
+			if !succeed {
+				log.Fatalln(errPing)
+				os.Exit(3)
+			}
+		},
+		Catch: func(e Exception) {
+			log.Fatalf("Error raised while running PingDb: %+v", e)
+			os.Exit(3)
+		},
+	}.Do()
 
-	// TryCatchBlock{
-	// 	Try: func() {
-	// 		Spin.Prefix = " Testing database config"
-	// 		succeed, errPing := db.PingDb(dbconf)
-	// 		if !succeed {
-	// 			log.Fatalln(errPing)
-	// 			os.Exit(3)
-	// 		}
-	// 	},
-	// 	Catch: func(e Exception) {
-	// 		log.Fatalf("Error raised while running PingDb: %+v", e)
-	// 		os.Exit(3)
-	// 	},
-	// }.Do()
+	TryCatchBlock{
+		Try: func() {
+			Spin.Prefix = " Migrating database"
+			if !SetupDb(dbconf) {
+				// fmt.Println("Database migration success.")
+				fmt.Println("Database migration failed.")
+				os.Exit(3)
+			}
 
-	// TryCatchBlock{
-	// 	Try: func() {
-	// 		Spin.Prefix = " Migrating database"
-	// 		if !db.SetupDb(dbconf) {
-	// 			// fmt.Println("Database migration success.")
-	// 			fmt.Println("Database migration failed.")
-	// 			os.Exit(3)
-	// 		}
+		},
+		Catch: func(e Exception) {
+			log.Fatalf("Error raised while running SetupDb: %+v", e)
+			os.Exit(3)
+		},
+	}.Do()
 
-	// 	},
-	// 	Catch: func(e Exception) {
-	// 		log.Fatalf("Error raised while running SetupDb: %+v", e)
-	// 		os.Exit(3)
-	// 	},
-	// }.Do()
-
-	// time.Sleep(10 * time.Second)
+	time.Sleep(10 * time.Second)
 	Spin.Stop()
 }
 
