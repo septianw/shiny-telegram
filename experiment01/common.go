@@ -3,10 +3,12 @@ package main
 import (
 	// "errors"
 
-	"log"
 	"plugin"
 
 	"strings"
+
+	"encoding/gob"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
@@ -23,12 +25,6 @@ func GetConfig(key string) interface{} {
 
 func GetAllConfig() map[string]interface{} {
 	return viper.AllSettings()
-}
-
-func ErrHandler(err error) {
-	if err != nil {
-		log.Println(err)
-	}
 }
 
 // This function will load *.so library without parsing its function.
@@ -72,4 +68,16 @@ func LoadContribModule(moduleName string) *Module {
 	mod.Router = routersym.(func(*gin.Engine))
 
 	return &mod
+}
+
+func WriteRuntime(rt Runtime) {
+	RuntimeFile, err := os.OpenFile("/tmp/shinyRuntimeFile", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+	ErrHandler(err)
+
+	enc := gob.NewEncoder(RuntimeFile)
+	err = enc.Encode(rt)
+	ErrHandler(err)
+
+	err = RuntimeFile.Close()
+	ErrHandler(err)
 }

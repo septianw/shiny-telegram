@@ -22,6 +22,7 @@ const BOOTSTRAP_LEVEL_3 = 3
 
 var Spin = spinner.New(spinner.CharSets[24], 100*time.Millisecond)
 var ListenAddr, Dsn string
+var rt Runtime
 
 // var Config
 
@@ -33,28 +34,32 @@ var ListenAddr, Dsn string
 //   config
 //   libraries
 func RunBootLevel0() {
-	var files []string
+	// var files []string
 
 	// fmt.Println()
 	Spin.Start()
 	Spin.Suffix = "  Check files existence:"
-	files = []string{
-		fmt.Sprintf("/etc/%s/config", APPNAME),
-		fmt.Sprintf("/etc/%s/config.d/", APPNAME),
-		fmt.Sprintf("/usr/local/lib/%s", APPNAME),
-		fmt.Sprintf("/usr/local/lib/%s/modules", APPNAME),
-	}
+	// files = []string{
+	// 	fmt.Sprintf("/etc/%s/config", APPNAME),
+	// 	fmt.Sprintf("/etc/%s/config.d/", APPNAME),
+	// 	fmt.Sprintf("/usr/local/lib/%s", APPNAME),
+	// 	fmt.Sprintf("/usr/local/lib/%s/modules", APPNAME),
+	// }
 
-	for _, lcheck := range files {
-		if _, err := os.Stat(lcheck); os.IsNotExist(err) {
-			log.Println(lcheck + " not exist")
-			// fmt.Println("wow")
-			os.Exit(1)
-		}
-		// else {
-		// 	log.Println(lcheck + " check.")
-		// }
-	}
+	// for _, lcheck := range files {
+	// 	if _, err := os.Stat(lcheck); os.IsNotExist(err) {
+	// 		log.Println(lcheck + " not exist")
+	// 		// fmt.Println("wow")
+	// 		os.Exit(1)
+	// 	}
+	// 	// else {
+	// 	// 	log.Println(lcheck + " check.")
+	// 	// }
+	// }
+
+	rt.AppName = APPNAME
+	rt.BuildId = BUILDID
+	rt.Version = VERSION
 
 	viper.SetConfigType("toml")
 	viper.SetConfigName("config")
@@ -78,6 +83,7 @@ func RunBootLevel0() {
 	// fmt.Printf("\n%+v\n", viper.Get("schema"))
 
 	fmt.Printf("Loaded configuration file: %s\n", viper.ConfigFileUsed())
+	rt.ConfigLocation = viper.ConfigFileUsed()
 
 	ListenAddr = fmt.Sprintf("%s:%d", viper.GetString("server.bind"), viper.GetInt("server.port"))
 	// fmt.Printf("Listening at %s\n", ListenAddr)
@@ -92,20 +98,22 @@ func RunBootLevel0() {
 	default:
 		STAGE = "development"
 	}
+	rt.Stage = STAGE
 
 	// Load main library
-	// Libloc = viper.GetString("libraryLocation")
+	Libloc = viper.GetString("libraryLocation")
 
 	// // if modloc is empty use default location Current Working Directory
-	// if strings.Compare(Libloc, "") == 0 {
-	// 	if strings.Compare(LIBRARY_LOCATION, "") != 0 {
-	// 		Libloc = LIBRARY_LOCATION
-	// 	} else {
-	// 		cwd, err := os.Getwd()
-	// 		ErrHandler(err)
-	// 		Libloc = cwd + "/lib"
-	// 	}
-	// }
+	if strings.Compare(Libloc, "") == 0 {
+		if strings.Compare(LIBRARY_LOCATION, "") != 0 {
+			Libloc = LIBRARY_LOCATION
+		} else {
+			cwd, err := os.Getwd()
+			ErrHandler(err)
+			Libloc = cwd + "/lib"
+		}
+	}
+	rt.Libloc = Libloc
 
 	// time.Sleep(10 * time.Second)
 	Spin.Stop()
@@ -143,7 +151,7 @@ func RunBootLevel1() {
 
 	TryCatchBlock{
 		Try: func() {
-			Spin.Prefix = " Testing database config"
+			Spin.Suffix = " Testing database config"
 			succeed, errPing := PingDb(dbconf)
 			if !succeed {
 				log.Fatalln(errPing)
@@ -154,11 +162,14 @@ func RunBootLevel1() {
 			log.Fatalf("Error raised while running PingDb: %+v", e)
 			os.Exit(3)
 		},
+		Finally: func() {
+			Spin.Suffix = " Database config test success"
+		},
 	}.Do()
 
 	TryCatchBlock{
 		Try: func() {
-			Spin.Prefix = " Migrating database"
+			Spin.Suffix = " Migrating database"
 			if !SetupDb(dbconf) {
 				// fmt.Println("Database migration success.")
 				fmt.Println("Database migration failed.")
@@ -170,9 +181,13 @@ func RunBootLevel1() {
 			log.Fatalf("Error raised while running SetupDb: %+v", e)
 			os.Exit(3)
 		},
+		Finally: func() {
+			Spin.Suffix = " Database migration success"
+		},
 	}.Do()
 
-	time.Sleep(10 * time.Second)
+	rt.Dbconf = dbconf
+
 	Spin.Stop()
 }
 
@@ -197,8 +212,8 @@ func RunBootLevel2() {
 
 	// if modloc is empty use default location Current Working Directory
 	if strings.Compare(Modloc, "") == 0 {
-		if strings.Compare(LIBRARY_LOCATION, "") != 0 {
-			Modloc = LIBRARY_LOCATION
+		if strings.Compare(MODULE_LOCATION, "") != 0 {
+			Modloc = MODULE_LOCATION
 		} else {
 			cwd, err := os.Getwd()
 			ErrHandler(err)
@@ -206,6 +221,9 @@ func RunBootLevel2() {
 		}
 	}
 
+	rt.Modloc = Modloc
+
+	Spin.Suffix = " Initiate core modules"
 	coreModules, err := ioutil.ReadDir(strings.Join(
 		[]string{Modloc, "core"}, "/"))
 	ErrHandler(err)
@@ -248,6 +266,20 @@ func RunBootLevel3() {
 		}
 	}
 
+	Spin.Suffix = " Initiate contributed modules"
+	contribModules, err := ioutil.ReadDir(strings.Join(
+		[]string{Modloc, "contrib"}, "/"))
+	ErrHandler(err)
+
+	// Setup router for the first time.
+	// Routers = SetupRouter()
+
+	for _, contribModule := range contribModules {
+		m := LoadContribModule(contribModule.Name())
+		m.Bootstrap()
+		m.Router(Routers)
+	}
+
 	// time.Sleep(10 * time.Second)
 	Spin.Stop()
 }
@@ -267,6 +299,7 @@ func Bootstrap(level int) {
 		RunBootLevel3()
 		break
 	}
+	WriteRuntime(rt)
 }
 
 func BootstrapAll() {

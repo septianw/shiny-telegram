@@ -51,6 +51,7 @@ func main() {
 	<-quit
 	log.Println("wow")
 	log.Println("Shutdown Server ...")
+	os.Remove("/tmp/shinyRuntimeFile")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
