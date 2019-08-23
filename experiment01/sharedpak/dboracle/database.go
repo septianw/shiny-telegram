@@ -1,4 +1,4 @@
-package main
+package dboracle
 
 import (
 	"database/sql"
@@ -6,10 +6,11 @@ import (
 
 	"fmt"
 
+	pak "github.com/septianw/shiny-telegram/experiment01/sharedpak"
 	_ "gopkg.in/goracle.v2"
 )
 
-func PingDb(d Dbconf) (bool, error) {
+func PingDb(d pak.Dbconf) (bool, error) {
 
 	dsn := fmt.Sprintf("%s/%s@%s:%d/%s", d.User, d.Pass, d.Host, d.Port, d.Database)
 
@@ -26,7 +27,7 @@ func PingDb(d Dbconf) (bool, error) {
 	return true, nil
 }
 
-func OpenDb(d Dbconf) (*sql.DB, error) {
+func OpenDb(d pak.Dbconf) (*sql.DB, error) {
 	dsn := fmt.Sprintf("%s/%s@%s:%d/%s",
 		d.User, d.Pass, d.Host, d.Port, d.Database)
 
@@ -35,10 +36,10 @@ func OpenDb(d Dbconf) (*sql.DB, error) {
 	return database, err
 }
 
-func Migrate(location string, d Dbconf) {
+func Migrate(location string, d pak.Dbconf) {
 	return
 }
 
-func SetupDb(d Dbconf) bool {
+func SetupDb(d pak.Dbconf) bool {
 	return true
 }

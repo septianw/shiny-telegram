@@ -12,6 +12,8 @@ import (
 	// "reflect"
 	"strings"
 
+	pak "github.com/septianw/shiny-telegram/experiment01/sharedpak"
+	ora "github.com/septianw/shiny-telegram/experiment01/sharedpak/dboracle"
 	"github.com/spf13/viper"
 )
 
@@ -22,7 +24,7 @@ const BOOTSTRAP_LEVEL_3 = 3
 
 var Spin = spinner.New(spinner.CharSets[24], 100*time.Millisecond)
 var ListenAddr, Dsn string
-var rt Runtime
+var rt pak.Runtime
 
 // var Config
 
@@ -109,7 +111,7 @@ func RunBootLevel0() {
 			Libloc = LIBRARY_LOCATION
 		} else {
 			cwd, err := os.Getwd()
-			ErrHandler(err)
+			pak.ErrHandler(err)
 			Libloc = cwd + "/lib"
 		}
 	}
@@ -126,7 +128,7 @@ func RunBootLevel0() {
 //   check schema structure
 //   schema exist
 func RunBootLevel1() {
-	var dbconf Dbconf
+	var dbconf pak.Dbconf
 
 	RunBootLevel0()
 	Spin.Start()
@@ -149,16 +151,16 @@ func RunBootLevel1() {
 	dbconf.Pass = viper.GetString("database.password")     // d["password"].(string)
 	dbconf.Database = viper.GetString("database.database") // d["database"].(string)
 
-	TryCatchBlock{
+	pak.TryCatchBlock{
 		Try: func() {
 			Spin.Suffix = " Testing database config"
-			succeed, errPing := PingDb(dbconf)
+			succeed, errPing := ora.PingDb(dbconf)
 			if !succeed {
 				log.Fatalln(errPing)
 				os.Exit(3)
 			}
 		},
-		Catch: func(e Exception) {
+		Catch: func(e pak.Exception) {
 			log.Fatalf("Error raised while running PingDb: %+v", e)
 			os.Exit(3)
 		},
@@ -167,17 +169,17 @@ func RunBootLevel1() {
 		},
 	}.Do()
 
-	TryCatchBlock{
+	pak.TryCatchBlock{
 		Try: func() {
 			Spin.Suffix = " Migrating database"
-			if !SetupDb(dbconf) {
+			if !ora.SetupDb(dbconf) {
 				// fmt.Println("Database migration success.")
 				fmt.Println("Database migration failed.")
 				os.Exit(3)
 			}
 
 		},
-		Catch: func(e Exception) {
+		Catch: func(e pak.Exception) {
 			log.Fatalf("Error raised while running SetupDb: %+v", e)
 			os.Exit(3)
 		},
@@ -216,7 +218,7 @@ func RunBootLevel2() {
 			Modloc = MODULE_LOCATION
 		} else {
 			cwd, err := os.Getwd()
-			ErrHandler(err)
+			pak.ErrHandler(err)
 			Modloc = cwd + "/modules"
 		}
 	}
@@ -226,7 +228,7 @@ func RunBootLevel2() {
 	Spin.Suffix = " Initiate core modules"
 	coreModules, err := ioutil.ReadDir(strings.Join(
 		[]string{Modloc, "core"}, "/"))
-	ErrHandler(err)
+	pak.ErrHandler(err)
 
 	// Setup router for the first time.
 	Routers = SetupRouter()
@@ -261,7 +263,7 @@ func RunBootLevel3() {
 			Modloc = MODULE_LOCATION
 		} else {
 			cwd, err := os.Getwd()
-			ErrHandler(err)
+			pak.ErrHandler(err)
 			Modloc = cwd + "/modules"
 		}
 	}
@@ -269,7 +271,7 @@ func RunBootLevel3() {
 	Spin.Suffix = " Initiate contributed modules"
 	contribModules, err := ioutil.ReadDir(strings.Join(
 		[]string{Modloc, "contrib"}, "/"))
-	ErrHandler(err)
+	pak.ErrHandler(err)
 
 	// Setup router for the first time.
 	// Routers = SetupRouter()

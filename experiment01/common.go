@@ -11,6 +11,7 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	pak "github.com/septianw/shiny-telegram/experiment01/sharedpak"
 	"github.com/spf13/viper"
 )
 
@@ -31,7 +32,7 @@ func GetAllConfig() map[string]interface{} {
 // After load library with this function you need to lookup your function.
 func LoadSo(path string) *plugin.Plugin {
 	plug, err := plugin.Open(path)
-	ErrHandler(err)
+	pak.ErrHandler(err)
 
 	return plug
 }
@@ -42,10 +43,10 @@ func LoadCoreModule(moduleName string) *Module {
 
 	lib := LoadSo(modpath)
 	bootsym, err := lib.Lookup("Bootstrap")
-	ErrHandler(err)
+	pak.ErrHandler(err)
 
 	routersym, err := lib.Lookup("Routers")
-	ErrHandler(err)
+	pak.ErrHandler(err)
 
 	mod.Bootstrap = bootsym.(func())
 	mod.Router = routersym.(func(*gin.Engine))
@@ -59,10 +60,10 @@ func LoadContribModule(moduleName string) *Module {
 
 	lib := LoadSo(modpath)
 	bootsym, err := lib.Lookup("Bootstrap")
-	ErrHandler(err)
+	pak.ErrHandler(err)
 
 	routersym, err := lib.Lookup("Routers")
-	ErrHandler(err)
+	pak.ErrHandler(err)
 
 	mod.Bootstrap = bootsym.(func())
 	mod.Router = routersym.(func(*gin.Engine))
@@ -70,14 +71,14 @@ func LoadContribModule(moduleName string) *Module {
 	return &mod
 }
 
-func WriteRuntime(rt Runtime) {
+func WriteRuntime(rt pak.Runtime) {
 	RuntimeFile, err := os.OpenFile("/tmp/shinyRuntimeFile", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
-	ErrHandler(err)
+	pak.ErrHandler(err)
 
 	enc := gob.NewEncoder(RuntimeFile)
 	err = enc.Encode(rt)
-	ErrHandler(err)
+	pak.ErrHandler(err)
 
 	err = RuntimeFile.Close()
-	ErrHandler(err)
+	pak.ErrHandler(err)
 }

@@ -1,6 +1,7 @@
-package main
+package sharedpak
 
 import (
+	"database/sql"
 	"encoding/gob"
 	"log"
 	"os"
@@ -14,6 +15,8 @@ type Dbconf struct {
 	Pass     string
 	Database string
 }
+
+type OpenDbFunc func(d Dbconf) (*sql.DB, error)
 
 type Runtime struct {
 	AppName        string

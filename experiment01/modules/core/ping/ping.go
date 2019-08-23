@@ -11,7 +11,7 @@ func Bootstrap() {
 	log.Println("Ping module loaded.")
 }
 
-func Routers(r *gin.Engine) {
+func Router(r *gin.Engine) {
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "pong")
 	})
