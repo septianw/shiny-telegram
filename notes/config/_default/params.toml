@@ -1,13 +1,13 @@
 # Hugo
-title = "My Docs"
-description = "Congrats on setting up a new Doks project!"
+title = "Experiment notes"
+description = "This is a notes and update of my experiments in Shiny-telegram repository"
 images = ["cover.png"]
 
 # mainSections
 mainSections = ["docs"]
 
 [social]
-  twitter = "getdoks"
+  twitter = "septianw"
 
 # Doks (@hyas/doks-core)
 [doks]

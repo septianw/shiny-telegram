@@ -1,7 +1,7 @@
 ---
-title : "Welcome to Doks"
+title : "Welcome to my notes"
 description: ""
-lead: "Congrats on setting up a new Doks project!"
+lead: "I rarely made a documentation during my experiment, but when i do i'll make it as detail as possible. "
 date: 2023-09-07T16:33:54+02:00
 lastmod: 2023-09-07T16:33:54+02:00
 draft: false
@@ -11,3 +11,5 @@ seo:
  canonical: "" # custom canonical URL (optional)
  noindex: false # false (default) or true
 ---
+
+This is test par

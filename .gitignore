@@ -9,3 +9,5 @@ experiment02/experiment02
 ./experiment01/mainpage/package-lock.json
 experiment01/bungkus/*
 notes/node_modules
+notes/public
+notes/resources/_gen

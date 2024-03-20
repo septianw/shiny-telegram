@@ -1,4 +1,4 @@
-title = "My Docs"
+title = "Experiment notes"
 baseurl = "/"
 canonifyURLs = false
 disableAliases = true
@@ -17,7 +17,7 @@ defaultContentLanguage = "en"
 disableLanguages = ["de", "nl"]
 defaultContentLanguageInSubdir = false
 
-copyRight = "Copyright (c) 2020-2024 Hyas"
+copyRight = "Copyright (c) 2024 Septian Wibisono"
 
 [build.buildStats]
   enable = true
