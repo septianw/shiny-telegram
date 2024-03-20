@@ -56,15 +56,14 @@ jobs:
           HUGO_ENVIRONMENT: production
           HUGO_ENV: production
         run: |
-          hugo \
+          cd notes; hugo -V \
             --gc \
             --minify \
-            --source ./notes \
             --baseURL "${{ steps.pages.outputs.base_url }}/"          
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./public
+          path: ./notes/public
 
   # Deployment job
   deploy:
