@@ -59,7 +59,7 @@ jobs:
           pwd && cd notes && npm install && hugo --logLevel debug \
             --gc \
             --minify \
-            --baseURL "${{ steps.pages.outputs.base_url }} ./" &&  pwd && ls -alh
+            --baseURL "${{ steps.pages.outputs.base_url }}" ./ &&  pwd && ls -alh
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
