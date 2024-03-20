@@ -8,3 +8,4 @@ experiment02/experiment02
 ./experiment01/mainpage/build
 ./experiment01/mainpage/package-lock.json
 experiment01/bungkus/*
+notes/node_modules
