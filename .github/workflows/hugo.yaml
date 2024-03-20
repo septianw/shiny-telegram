@@ -56,10 +56,10 @@ jobs:
           HUGO_ENVIRONMENT: production
           HUGO_ENV: production
         run: |
-          pwd && cd notes; hugo --logLevel debug \
+          pwd && cd notes && hugo --logLevel debug \
             --gc \
             --minify \
-            --baseURL "${{ steps.pages.outputs.base_url }} && pwd && ls -alh ./"          
+            --baseURL "${{ steps.pages.outputs.base_url }} ./" &&  pwd && ls -alh
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
